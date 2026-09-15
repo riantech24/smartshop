@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SmartShop — Asisten Belanja Cerdas</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6366f1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<style>
+:root{
+  --bg:#0f1115; --card:#181b22; --card2:#1f232c; --line:#2a2f3a;
+  --txt:#e8eaed; --muted:#9aa3b2; --green:#22c55e; --indigo:#6366f1;
+  --amber:#f59e0b; --red:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);
+  color:var(--txt);min-height:100vh;padding-bottom:80px;overscroll-behavior-y:none}
+header{padding:18px 20px 0;max-width:900px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-start}
+h1{font-size:22px;display:flex;align-items:center;gap:8px}
+h1 span{font-size:26px}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+#installBtn{display:none;background:var(--green);color:#fff;border:none;padding:8px 14px;
+  border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
+#installBtn.show{display:block}
+nav{display:flex;gap:6px;overflow-x:auto;padding:16px 20px 0;max-width:900px;margin:0 auto;
+  scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{background:var(--card);color:var(--muted);border:1px solid var(--line);
+  padding:9px 14px;border-radius:10px;font-size:13px;cursor:pointer;white-space:nowrap;
+  transition:.15s;font-weight:600;font-family:inherit}
+nav button.active{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+main{max-width:900px;margin:0 auto;padding:18px 20px}
+section{display:none;animation:fade .2s ease}
+section.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:600px){.g2,.g3{grid-template-columns:1fr}}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px;font-weight:600}
+input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);
+  color:var(--txt);padding:11px 12px;border-radius:9px;font-size:14px;font-family:inherit;outline:none}
+input:focus,select:focus{border-color:var(--indigo)}
+.btn{background:var(--indigo);color:#fff;border:none;padding:11px 18px;border-radius:9px;
+  font-size:14px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+.btn:active{transform:scale(.97)}
+.btn.green{background:var(--green)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+.btn.sm{padding:6px 11px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px;margin-bottom:10px;position:relative}
+.item.hot{border-color:var(--green);box-shadow:0 0 0 1px rgba(34,197,94,.25)}
+.item h3{font-size:15px;margin-bottom:3px;padding-right:70px}
+.meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+.price{font-size:18px;font-weight:700}
+.price.target{color:var(--green);font-size:13px;font-weight:600}
+.bar{height:7px;background:var(--card2);border-radius:99px;overflow:hidden;margin:9px 0 6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--indigo),var(--green));
+  border-radius:99px;transition:width .3s}
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;display:inline-block}
+.b-hot{background:rgba(34,197,94,.15);color:var(--green)}
+.b-wait{background:rgba(245,158,11,.15);color:var(--amber)}
+.b-sync{background:rgba(99,102,241,.15);color:#a5b4fc}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px}
+.stat .n{font-size:21px;font-weight:700;margin-top:4px}
+.stat .l{font-size:12px;color:var(--muted);font-weight:600}
+.empty{text-align:center;color:var(--muted);padding:38px 20px;font-size:14px}
+.empty div{font-size:34px;margin-bottom:10px}
+.chk{width:20px;height:20px;accent-color:var(--green);cursor:pointer;flex-shrink:0}
+.done{opacity:.45;text-decoration:line-through}
+.tip{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);
+  border-radius:10px;padding:11px 13px;font-size:12.5px;color:#c7d2fe;line-height:1.55}
+ul.feat{list-style:none;font-size:13.5px;line-height:1.9;color:var(--muted)}
+ul.feat li:before{content:"✓ ";color:var(--green);font-weight:700}
+h2{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.money{color:var(--green);font-weight:700}
+.del{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--muted);
+  cursor:pointer;font-size:16px;padding:4px}
+.win{background:rgba(34,197,94,.08);border:1px solid var(--green);border-radius:12px;
+  padding:13px;font-size:13.5px;margin-bottom:10px;line-height:1.6}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);
+  background:var(--card2);border:1px solid var(--line);padding:12px 18px;border-radius:10px;
+  font-size:13px;transition:.3s;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:var(--green);color:var(--green)}
+.toast.err{border-color:var(--red);color:var(--red)}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1><span>🛍️</span> SmartShop</h1>
+    <div class="sub">Belanja lebih cerdas — lacak, bandingkan, hemat.</div>
+  </div>
+  <button id="installBtn">⬇ Install App</button>
+</header>
+
+<nav>
+  <button class="active" data-tab="wishlist">🎯 Incaran</button>
+  <button data-tab="compare">⚖️ Banding</button>
+  <button data-tab="shopping">🛒 Belanja</button>
+  <button data-tab="stats">📊 Statistik</button>
+  <button data-tab="monetize">💰 Info</button>
+</nav>
+
+<main>
+<!-- WISHLIST -->
+<section id="wishlist" class="active">
+  <div class="card">
+    <h2>➕ Tambah Barang Incaran</h2>
+    <div class="grid g2">
+      <div><label>Nama Barang</label><input id="wName" placeholder="cth: Sepatu Lari Nike"></div>
+      <div><label>Harga Sekarang (Rp)</label><input id="wPrice" type="number" placeholder="850000"></div>
+      <div><label>Harga Target (Rp)</label><input id="wTarget" type="number" placeholder="700000"></div>
+      <div><label>Prioritas</label>
+        <select id="wPrio"><option value="1">🔥 Tinggi</option><option value="2" selected>⚡ Sedang</option><option value="3">💤 Rendah</option></select>
+      </div>
+    </div>
+    <div style="margin-top:10px"><label>Link Produk (untuk auto-cek harga & afiliasi)</label>
+      <input id="wUrl" placeholder="https://shopee.co.id/... atau tokopedia.com/..."></div>
+    <div style="margin-top:12px" class="row">
+      <button class="btn" onclick="addWish()">Simpan Barang</button>
+      <button class="btn ghost" onclick="checkAllPrices()" id="checkAllBtn">🔄 Cek Harga Otomatis</button>
+    </div>
+  </div>
+  <div id="wishSummary"></div>
+  <div id="wishList"></div>
+</section>
+
+<!-- COMPARE -->
+<section id="compare">
+  <div class="card">
+    <h2>⚖️ Bandingkan Harga per Unit</h2>
+    <div class="tip">💡 Kemasan besar belum tentu lebih murah! Masukkan 2–3 produk, lihat mana yang harga per gram/ml/pcs paling rendah.</div>
+    <div id="cmpRows" style="margin-top:14px"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost sm" onclick="addCmpRow()">+ Tambah Produk</button>
+      <button class="btn green sm" onclick="calcCmp()">Hitung</button>
+    </div>
+  </div>
+  <div id="cmpResult"></div>
+</section>
+
+<!-- SHOPPING -->
+<section id="shopping">
+  <div class="card">
+    <h2>🛒 Daftar Belanja</h2>
+    <div class="grid g3">
+      <div style="grid-column:span 2"><label>Nama Barang</label><input id="sName" placeholder="cth: Beras 5kg"></div>
+      <div><label>Estimasi (Rp)</label><input id="sPrice" type="number" placeholder="65000"></div>
+    </div>
+    <div class="grid g2" style="margin-top:10px">
+      <div><label>Jumlah</label><input id="sQty" type="number" value="1"></div>
+      <div><label>Budget Total (Rp)</label><input id="budget" type="number" placeholder="500000" oninput="setBudget(this.value)"></div>
+    </div>
+    <div style="margin-top:12px"><button class="btn" onclick="addShop()">Tambah ke Daftar</button></div>
+  </div>
+  <div id="shopSummary"></div>
+  <div id="shopList"></div>
+</section>
+
+<!-- STATS -->
+<section id="stats">
+  <div class="grid g2" id="statCards"></div>
+  <div class="card" style="margin-top:12px">
+    <h2>📜 Riwayat Pembelian</h2>
+    <div id="historyList"></div>
+  </div>
+  <div class="card">
+    <h2>☁️ Sinkronisasi Cloud</h2>
+    <div class="tip">Aktifkan backend untuk sinkron data antar perangkat.</div>
+    <div class="grid g2" style="margin-top:10px">
+      <div><label>User ID (email/nama)</label><input id="syncUser" placeholder="email@anda.com"></div>
+      <div><label>Backend URL</label><input id="syncUrl" placeholder="https://api.anda.com"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn sm" onclick="saveSync()">Simpan</button>
+      <button class="btn ghost sm" onclick="pushCloud()">⬆ Push ke Cloud</button>
+      <button class="btn ghost sm" onclick="pullCloud()">⬇ Pull dari Cloud</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>💾 Data Lokal</h2>
+    <div class="row">
+      <button class="btn ghost sm" onclick="exportData()">Export JSON</button>
+      <button class="btn ghost sm" onclick="document.getElementById('imp').click()">Import JSON</button>
+      <button class="btn ghost sm" onclick="resetAll()" style="color:var(--red)">Hapus Semua</button>
+      <input type="file" id="imp" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+  </div>
+</section>
+
+<!-- MONETIZE -->
+<section id="monetize">
+  <div class="card">
+    <h2>💰 Model Monetisasi</h2>
+    <ul class="feat">
+      <li><b>Afiliasi</b> — komisi 1–10% dari Shopee/Tokopedia/Lazada untuk setiap pembelian via link Anda.</li>
+      <li><b>Cashback partner</b> — bagi hasil dengan merchant lokal.</li>
+      <li><b>Premium (Rp 19.000/bln)</b> — auto-tracking 24 jam, notifikasi, unlimited item.</li>
+      <li><b>Iklan kontekstual</b> — relevan dengan kategori incaran pengguna.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>🚀 Status Fitur</h2>
+    <ul class="feat">
+      <li>PWA — installable & offline</li>
+      <li>Auto-cek harga via backend scraper</li>
+      <li>Link afiliasi otomatis</li>
+      <li>Sinkronisasi cloud antar perangkat</li>
+    </ul>
+  </div>
+  <div class="win">
+    <b>🎯 Prinsip:</b> Jangan jual data pengguna. Hemat uang mereka dulu — komisi afiliasi mengalir sendiri.
+  </div>
+</section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ STATE ============ */
+const KEY='smartshop_v2';
+let S={wish:[],shop:[],hist:[],budget:0,userId:'',backendUrl:''};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const rp=n=>'Rp '+Math.round(n||0).toLocaleString('id-ID');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toast(msg,type=''){
+  const t=$('toast');t.textContent=msg;t.className='toast show '+type;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2500);
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){
+  try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r));}catch(e){}
+  if(!S.wish.length&&!S.shop.length&&!S.hist.length)seed();
+}
+function seed(){
+  S.wish=[
+    {id:uid(),name:'Headphone Sony WH-1000XM5',price:4299000,target:3600000,prio:1,url:'',done:false},
+    {id:uid(),name:'Kopi Arabika 1kg',price:185000,target:150000,prio:2,url:'',done:false}
+  ];
+  S.shop=[{id:uid(),name:'Beras 5kg',price:65000,qty:1,done:false}];
+  S.budget=300000;save();
+}
+
+/* ============ TABS ============ */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('section').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');$(b.dataset.tab).classList.add('active');
+  };
+});
+
+/* ============ WISHLIST ============ */
+function addWish(){
+  const n=$('wName').value.trim(),p=+$('wPrice').value,t=+$('wTarget').value;
+  if(!n||!p)return toast('Nama & harga wajib diisi','err');
+  S.wish.push({id:uid(),name:n,price:p,target:t||p*0.85,prio:+$('wPrio').value,url:$('wUrl').value.trim(),done:false});
+  $('wName').value=$('wPrice').value=$('wTarget').value=$('wUrl').value='';
+  save();renderWish();toast('Barang ditambahkan','ok');
+}
+function delWish(id){S.wish=S.wish.filter(x=>x.id!==id);save();renderWish();}
+function buyWish(id){
+  const w=S.wish.find(x=>x.id===id);if(!w)return;
+  if(!confirm('Tandai "'+w.name+'" sudah dibeli seharga '+rp(w.price)+'?'))return;
+  S.hist.unshift({id:uid(),name:w.name,amount:w.price,date:new Date().toISOString()});
+  S.wish=S.wish.filter(x=>x.id!==id);save();renderWish();renderStats();
+}
+function editWish(id){
+  const w=S.wish.find(x=>x.id===id);if(!w)return;
+  const p=prompt('Harga sekarang (Rp):',w.price);if(p===null)return;
+  const t=prompt('Harga target (Rp):',w.target);if(t===null)return;
+  w.price=+p||w.price;w.target=+t||w.target;save();renderWish();
+}
+async function checkPrice(id){
+  const w=S.wish.find(x=>x.id===id);if(!w||!w.url)return toast('Isi link produk dulu','err');
+  if(!S.backendUrl)return toast('Set Backend URL di tab Statistik','err');
+  toast('Mengecek harga...');
+  try{
+    const r=await fetch(S.backendUrl+'/api/check-price',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({url:w.url})
+    });
+    const d=await r.json();
+    if(d.price){w.price=d.price;save();renderWish();toast('Harga updated: '+rp(d.price),'ok');}
+    else toast('Harga tidak ditemukan','err');
+  }catch(e){toast('Gagal konek backend','err');}
+}
+async function checkAllPrices(){
+  const withUrl=S.wish.filter(w=>w.url);
+  if(!withUrl.length)return toast('Belum ada barang dengan link','err');
+  $('checkAllBtn').disabled=true;$('checkAllBtn').textContent='⏳ Mengecek...';
+  for(const w of withUrl){await checkPrice(w.id);}
+  $('checkAllBtn').disabled=false;$('checkAllBtn').textContent='🔄 Cek Harga Otomatis';
+}
+function renderWish(){
+  const list=S.wish.slice().sort((a,b)=>a.prio-b.prio);
+  const total=list.reduce((s,x)=>s+x.price,0);
+  const pot=list.reduce((s,x)=>s+Math.max(0,x.price-x.target),0);
+  $('wishSummary').innerHTML=list.length?`<div class="grid g2" style="margin-bottom:12px">
+    <div class="stat"><div class="l">Nilai Incaran</div><div class="n">${rp(total)}</div></div>
+    <div class="stat"><div class="l">Potensi Hemat</div><div class="n money">${rp(pot)}</div></div></div>`:'';
+  if(!list.length){$('wishList').innerHTML='<div class="empty"><div>🎯</div>Belum ada incaran.</div>';return;}
+  $('wishList').innerHTML=list.map(w=>{
+    const hit=w.price<=w.target;
+    const pct=Math.min(100,Math.round(w.target/w.price*100));
+    const gap=Math.max(0,w.price-w.target);
+    const pr=['🔥 Tinggi','⚡ Sedang','💤 Rendah'][w.prio-1];
+    return `<div class="item ${hit?'hot':''}">
+      <button class="del" onclick="delWish('${w.id}')">✕</button>
+      <h3>${esc(w.name)}</h3>
+      <div class="meta">${pr} · ${hit?'<span class="badge b-hot">🔥 Target tercapai!</span>':'<span class="badge b-wait">Tunggu turun '+rp(gap)+'</span>'}${w.url?' <span class="badge b-sync">🔗</span>':''}</div>
+      <div class="row" style="justify-content:space-between;align-items:flex-end">
+        <div><div class="price">${rp(w.price)}</div>
+        <div class="price target">Target: ${rp(w.target)}</div></div>
+        <div style="text-align:right;font-size:12px;color:var(--muted);font-weight:700">${pct}%</div>
+      </div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn green sm" onclick="buyWish('${w.id}')">✓ Beli</button>
+        <button class="btn ghost sm" onclick="editWish('${w.id}')">✎ Edit</button>
+        ${w.url?`<button class="btn ghost sm" onclick="checkPrice('${w.id}')">🔄 Cek</button>
+        <a class="btn ghost sm" href="${esc(w.url)}" target="_blank" rel="noopener" style="text-decoration:none">🔗 Buka</a>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ COMPARE ============ */
+let cmpN=0;
+function addCmpRow(name='',price='',qty='',unit='g'){
+  cmpN++;
+  const d=document.createElement('div');
+  d.className='card';d.style.background='var(--card2)';d.style.padding='12px';
+  d.innerHTML=`<div class="grid g2">
+    <div><label>Nama Produk</label><input class="cN" value="${esc(name)}" placeholder="Produk ${cmpN}"></div>
+    <div><label>Harga (Rp)</label><input class="cP" type="number" value="${price}"></div>
+    <div><label>Isi / Jumlah</label><input class="cQ" type="number" value="${qty}"></div>
+    <div><label>Satuan</label><select class="cU">
+      <option value="g" ${unit==='g'?'selected':''}>gram</option>
+      <option value="ml" ${unit==='ml'?'selected':''}>ml</option>
+      <option value="pcs" ${unit==='pcs'?'selected':''}>pcs</option>
+      <option value="m" ${unit==='m'?'selected':''}>meter</option>
+    </select></div></div>`;
+  $('cmpRows').appendChild(d);
+}
+function calcCmp(){
+  const rows=[...document.querySelectorAll('#cmpRows .card')].map(c=>({
+    n:c.querySelector('.cN').value.trim()||'Produk',
+    p:+c.querySelector('.cP').value,q:+c.querySelector('.cQ').value,u:c.querySelector('.cU').value
+  })).filter(r=>r.p>0&&r.q>0);
+  if(rows.length<2){$('cmpResult').innerHTML='<div class="empty"><div>⚖️</div>Minimal 2 produk valid.</div>';return;}
+  rows.forEach(r=>r.unit=r.p/r.q);
+  const best=Math.min(...rows.map(r=>r.unit));
+  rows.sort((a,b)=>a.unit-b.unit);
+  $('cmpResult').innerHTML=rows.map((r,i)=>`
+    <div class="item ${r.unit===best?'hot':''}">
+      <h3>${i===0?'🏆 ':''}${esc(r.n)}</h3>
+      <div class="meta">${rp(r.p)} untuk ${r.q} ${r.u}</div>
+      <div class="price">${rp(r.unit)} <span style="font-size:12px;color:var(--muted)">/ ${r.u}</span></div>
+      ${r.unit===best?'<div style="margin-top:6px"><span class="badge b-hot">PALING MURAH</span></div>':
+        `<div class="meta" style="margin-top:6px">Lebih mahal ${Math.round((r.unit/best-1)*100)}%</div>`}
+    </div>`).join('');
+}
+
+/* ============ SHOPPING ============ */
+function addShop(){
+  const n=$('sName').value.trim(),p=+$('sPrice').value,q=+$('sQty').value||1;
+  if(!n)return toast('Nama wajib','err');
+  S.shop.push({id:uid(),name:n,price:p||0,qty:q,done:false});
+  $('sName').value=$('sPrice').value='';$('sQty').value=1;save();renderShop();
+}
+function toggleShop(id){const i=S.shop.find(x=>x.id===id);if(i){i.done=!i.done;save();renderShop();}}
+function delShop(id){S.shop=S.shop.filter(x=>x.id!==id);save();renderShop();}
+function setBudget(v){S.budget=+v||0;save();renderShop();}
+function renderShop(){
+  $('budget').value=S.budget||'';
+  const total=S.shop.reduce((s,x)=>s+(x.price*x.qty),0);
+  const left=S.budget-total;
+  $('shopSummary').innerHTML=`<div class="grid g3" style="margin-bottom:12px">
+    <div class="stat"><div class="l">Total</div><div class="n">${rp(total)}</div></div>
+    <div class="stat"><div class="l">Budget</div><div class="n">${rp(S.budget)}</div></div>
+    <div class="stat"><div class="l">${left<0?'Over':'Sisa'}</div>
+      <div class="n" style="color:${left<0?'var(--red)':'var(--green)'}">${rp(Math.abs(left))}</div></div></div>`;
+  if(!S.shop.length){$('shopList').innerHTML='<div class="empty"><div>🛒</div>Daftar kosong.</div>';return;}
+  $('shopList').innerHTML=S.shop.map(x=>`
+    <div class="item ${x.done?'done':''}" style="display:flex;align-items:center;gap:12px;padding:12px 14px">
+      <input class="chk" type="checkbox" ${x.done?'checked':''} onchange="toggleShop('${x.id}')">
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:14px">${esc(x.name)}</div>
+        <div class="meta" style="margin:0">${x.qty} × ${rp(x.price)}</div>
+      </div>
+      <div style="font-weight:700">${rp(x.price*x.qty)}</div>
+      <button class="del" style="position:static" onclick="delShop('${x.id}')">✕</button>
+    </div>`).join('');
+}
+
+/* ============ STATS ============ */
+function renderStats(){
+  const spend=S.hist.reduce((s,x)=>s+x.amount,0);
+  const wTotal=S.wish.reduce((s,x)=>s+x.price,0);
+  const pot=S.wish.reduce((s,x)=>s+Math.max(0,x.price-x.target),0);
+  $('statCards').innerHTML=`
+    <div class="stat"><div class="l">Pengeluaran</div><div class="n">${rp(spend)}</div></div>
+    <div class="stat"><div class="l">Dibeli</div><div class="n">${S.hist.length}</div></div>
+    <div class="stat"><div class="l">Incaran Aktif</div><div class="n">${rp(wTotal)}</div></div>
+    <div class="stat"><div class="l">Potensi Hemat</div><div class="n money">${rp(pot)}</div></div>`;
+  $('syncUser').value=S.userId||'';$('syncUrl').value=S.backendUrl||'';
+  if(!S.hist.length){$('historyList').innerHTML='<div class="empty"><div>📜</div>Belum ada riwayat.</div>';return;}
+  $('historyList').innerHTML=S.hist.slice(0,30).map(h=>`
+    <div class="row" style="justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)">
+      <div><div style="font-size:13.5px;font-weight:600">${esc(h.name)}</div>
+      <div class="meta" style="margin:0">${new Date(h.date).toLocaleDateString('id-ID')}</div></div>
+      <div class="money">${rp(h.amount)}</div></div>`).join('');
+}
+
+/* ============ SYNC ============ */
+function saveSync(){
+  S.userId=$('syncUser').value.trim();S.backendUrl=$('syncUrl').value.trim().replace(/\/$/,'');
+  save();toast('Konfigurasi disimpan','ok');
+}
+async function pushCloud(){
+  if(!S.userId||!S.backendUrl)return toast('Isi User ID & URL dulu','err');
+  try{
+    const r=await fetch(S.backendUrl+'/api/sync/'+encodeURIComponent(S.userId),{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({wish:S.wish,shop:S.shop,hist:S.hist,budget:S.budget})
+    });
+    if(!r.ok)throw 0;
+    toast('Berhasil push ke cloud','ok');
+  }catch(e){toast('Gagal push','err');}
+}
+async function pullCloud(){
+  if(!S.userId||!S.backendUrl)return toast('Isi User ID & URL dulu','err');
+  try{
+    const r=await fetch(S.backendUrl+'/api/sync/'+encodeURIComponent(S.userId));
+    const d=await r.json();
+    if(d.wish){S.wish=d.wish;S.shop=d.shop||[];S.hist=d.hist||[];S.budget=d.budget||0;
+      save();renderAll();toast('Data ditarik dari cloud','ok');}
+    else toast('Belum ada data di cloud','err');
+  }catch(e){toast('Gagal pull','err');}
+}
+
+/* ============ DATA ============ */
+function exportData(){
+  const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='smartshop-backup.json';a.click();
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{S=Object.assign(S,JSON.parse(r.result));save();renderAll();toast('Import sukses','ok')}
+    catch(x){toast('File tidak valid','err')}};
+  r.readAsText(f);
+}
+function resetAll(){
+  if(!confirm('Hapus semua data lokal?'))return;
+  localStorage.removeItem(KEY);S={wish:[],shop:[],hist:[],budget:0,userId:'',backendUrl:''};renderAll();
+}
+
+/* ============ PWA INSTALL ============ */
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;$('installBtn').classList.add('show');
+});
+$('installBtn').onclick=async()=>{
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  const {outcome}=await deferredPrompt.userChoice;
+  if(outcome==='accepted')toast('App berhasil di-install!','ok');
+  deferredPrompt=null;$('installBtn').classList.remove('show');
+};
+
+/* ============ SERVICE WORKER ============ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js')
+      .then(()=>console.log('SW registered'))
+      .catch(e=>console.log('SW fail',e));
+  });
+}
+
+/* ============ INIT ============ */
+function renderAll(){renderWish();renderShop();renderStats();}
+load();
+addCmpRow('Kopi Sachet 200g',45000,200,'g');
+addCmpRow('Kopi Bubuk 500g',95000,500,'g');
+addCmpRow('Kopi Premium 1kg',180000,1000,'g');
+renderAll();
+</script>
+</body>
+</html>
