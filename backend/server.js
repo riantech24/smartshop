@@ -96,6 +96,15 @@ cron.schedule('0 */6 * * *', async () => {
   // Contoh: iterate users, ambil url, scrape, update, kirim notifikasi
 });
 
+cron.schedule('0 2 * * *', () => {
+  const fs = require('fs');
+  if (fs.existsSync('./smartshop.db')) {
+    const data = fs.readFileSync('./smartshop.db');
+    // Upload ke Google Drive / S3 / kirim ke email Anda
+    console.log('[BACKUP] DB size:', data.length);
+  }
+});
+
 /* ---------- ERROR HANDLER ---------- */
 app.use((err, req, res, next) => {
   console.error(err);
