@@ -12,7 +12,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: ['https://smartshop-assistant.netlify.app', 'http://localhost:5000'],
+  credentials: true
+}));
 app.use(express.json({ limit: '1mb' }));
 
 // Rate limit: 100 req / 15 menit
