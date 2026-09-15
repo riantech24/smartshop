@@ -25,6 +25,14 @@ app.get('/api/health', (_, res) => res.json({
   status: 'OK', version: '2.0.0', time: new Date().toISOString()
 }));
 
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "SmartShop Backend is running",
+    status: "online"
+  });
+});
+
 // Sync: simpan data user
 app.post('/api/sync/:userId', (req, res) => {
   try {
