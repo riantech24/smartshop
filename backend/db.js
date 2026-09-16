@@ -15,6 +15,15 @@ db.exec(`
     price INTEGER,
     checked_at INTEGER
   );
+  CREATE TABLE IF NOT EXISTS fcm_tokens (
+    user_id TEXT,
+    token TEXT UNIQUE,
+    created_at INTEGER,
+    PRIMARY KEY (user_id, token)
+  );
+  ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user';
+  ALTER TABLE users ADD COLUMN email TEXT;
+  ALTER TABLE users ADD COLUMN created_at INTEGER;
 `);
 
 module.exports = {

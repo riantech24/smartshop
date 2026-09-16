@@ -1,0 +1,40 @@
+type User @table {
+  email: String!
+  displayName: String!
+  avatarUrl: String
+  bio: String
+}
+
+type Note @table {
+  title: String!
+  content: String!
+  createdAt: Timestamp!
+  isPublic: Boolean
+  author: User!
+  workspace: Workspace
+}
+
+type Tag @table {
+  name: String!
+}
+
+type NoteTag @table(key: ["note", "tag"]) {
+  note: Note!
+  tag: Tag!
+}
+
+type NoteLink @table {
+  sourceNote: Note!
+  targetNote: Note!
+}
+
+type Workspace @table {
+  name: String!
+  owner: User!
+}
+
+type NotePermission @table {
+  note: Note!
+  user: User!
+  accessLevel: String!
+}
