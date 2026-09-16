@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartShop Admin</title>
+<style>
+  body { font-family: system-ui; background: #0f1115; color: #e8eaed; margin: 0; padding: 20px; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 24px; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card { background: #181b22; border: 1px solid #2a2f3a; border-radius: 12px; padding: 20px; }
+  .card .num { font-size: 32px; font-weight: 700; color: #6366f1; }
+  .card .lbl { font-size: 13px; color: #9aa3b2; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 12px; text-align: left; border-bottom: 1px solid #2a2f3a; font-size: 14px; }
+  th { color: #9aa3b2; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  .badge { background: rgba(99,102,241,.15); color: #a5b4fc; padding: 4px 10px; border-radius: 99px; font-size: 12px; }
+  .badge.admin { background: rgba(34,197,94,.15); color: #22c55e; }
+  .btn { background: #6366f1; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+  .btn.sm { padding: 5px 10px; font-size: 12px; }
+  .login-box { max-width: 400px; margin: 100px auto; }
+  input { width: 100%; background: #1f232c; border: 1px solid #2a2f3a; color: #e8eaed; padding: 10px; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="loginBox" class="login-box card">
+    <h2>🔐 Admin Login</h2>
+    <p style="color:#9aa3b2;font-size:13px">Masukkan JWT token Anda (dari Google login).</p>
+    <input id="tokenInput" placeholder="Paste JWT token di sini...">
+    <button class="btn" onclick="saveToken()">Masuk</button>
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h1>📊 Dashboard Admin</h1>
+      <button class="btn" onclick="logoutAdmin()">Logout</button>
+    </div>
+
+    <div class="grid" id="statsGrid"></div>
+
+    <div class="card">
+      <h2>👥 Daftar Pengguna</h2>
+      <table id="usersTable">
+        <thead><tr><th>User ID</th><th>Role</th><th>Terakhir Aktif</th><th>Aksi</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = localStorage.getItem('smartshop_backend') || 'http://localhost:3000';
+let token = localStorage.getItem('smartshop_admin_token');
+
+function saveToken() {
+  token = document.getElementById('tokenInput').value.trim();
+  if (!token) return alert('Token wajib diisi');
+  localStorage.setItem('smartshop_admin_token', token);
+  loadDashboard();
+}
+
+function logoutAdmin() {
+  localStorage.removeItem('smartshop_admin_token');
+  location.reload();
+}
+
+async function api(path) {
+  const r = await fetch(API + path, {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  if (!r.ok) throw new Error('API error ' + r.status);
+  return r.json();
+}
+
+async function loadDashboard() {
+  try {
+    const stats = await api('/api/admin/stats');
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="card"><div class="num">${stats.totalUsers}</div><div class="lbl">Total Pengguna</div></div>
+      <div class="card"><div class="num">${stats.totalWish}</div><div class="lbl">Wishlist Aktif</div></div>
+      <div class="card"><div class="num">${stats.priceChecks}</div><div class="lbl">Cek Harga</div></div>
+      <div class="card"><div class="num">${stats.recentUsers.length}</div><div class="lbl">Aktif 7 Hari</div></div>
+    `;
+
+    const users = await api('/api/admin/users');
+    document.querySelector('#usersTable tbody').innerHTML = users.map(u => `
+      <tr>
+        <td>${u.user_id}</td>
+        <td><span class="badge ${u.role === 'admin' ? 'admin' : ''}">${u.role || 'user'}</span></td>
+        <td>${new Date(u.updated_at).toLocaleString('id-ID')}</td>
+        <td>${u.role !== 'admin' ? `<button class="btn sm" onclick="promote('${u.user_id}')">Jadikan Admin</button>` : '-'}</td>
+      </tr>
+    `).join('');
+
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+  } catch (e) {
+    alert('Akses ditolak. Pastikan Anda login sebagai admin.');
+  }
+}
+
+async function promote(userId) {
+  if (!confirm('Jadikan ' + userId + ' sebagai admin?')) return;
+  await fetch(API + '/api/admin/promote/' + encodeURIComponent(userId), {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  loadDashboard();
+}
+
+// Init
+if (token) loadDashboard();
+</script>
+</body>
+</html>
